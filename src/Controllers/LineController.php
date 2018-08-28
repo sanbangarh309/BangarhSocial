@@ -9,21 +9,37 @@ use Illuminate\Http\Request;
 class LineController extends Controller
 {
 
-    private $hubVerifyToken = null;
-    private $accessToken = null;
-    private $tokken = false;
+    private $channelAccessToken;
+    private $channelSecret;
+    private $webhookResponse;
+    private $webhookEventObject;
+    private $apiReply;
+    private $apiPush;
     protected $client = null;
 
-    public function __construct()
-    {
-        
+    
+    public function __construct(){
+        $this->channelAccessToken = Self::getChannelAccessToken();
+        $this->channelSecret = Self::getChannelSecret();
+        $this->apiReply = Self::getApiReply();
+        $this->apiPush = Self::getApiPush();
+        $this->webhookResponse = file_get_contents('php://input');
+        $this->webhookEventObject = json_decode($this->webhookResponse);
+        // if ($this->webhookResponse) {
+        //     $this->sanAuthorization();
+        // }else{
+        //     echo json_encode(['msg'=>'App Not Connected']);die();
+        // }
     }
 
-    public function sanAuthorization(Request $request){ 
-        $token = env('LINE_TOKEN');
-        $line_id = env('LINE_ID');
-        $SECRET = env('LINE_SECRET');
-        print_r($request->all());exit;
+    public function sanAuthorization(){ 
+        $text = $this->getMessageText();
+        $bot->reply($text);
+        print_r($text);exit;
+        // $token = env('FACEBOOK_TOKEN');
+        // $line_id = env('LINE_ID');
+        // $SECRET = env('LINE_SECRET');
+        
         // $fbtoken = isset($_REQUEST['hub_verify_token']) ? $_REQUEST['hub_verify_token'] : '';
         // $challange = isset($_REQUEST['hub_challenge']) ? $_REQUEST['hub_challenge'] : '';
         // $this->setHubVerifyToken($vtoken);
@@ -41,122 +57,150 @@ class LineController extends Controller
         // }
     }
 
-    public function setHubVerifyToken($value)
-    {
-        $this->hubVerifyToken = $value;
+    public function getChannelAccessToken(){
+        $channelAccessToken = "p4Jrk+ERmgiWDL2BeP69F2w4hcw7BjUk2QByt0gufWQmYtzGsEOyLM39NGGpGTqu9Fe1V8o6EoAjI8s0CYSaVC2I/AGB0eBBtAeokX34nLLUli9sAYLQKQvH6jp/3EM2MQJT8/SbDTcHCm+H5fcvZgdB04t89/1O/w1cDnyilFU=";
+        return $channelAccessToken;
+    }
+    public function getChannelSecret(){
+        $channelSecret = "e815defa08f136f134a850f244574efd";
+        return $channelSecret;
+    }
+    public function getApiReply(){
+        $api = "https://api.line.me/v2/bot/message/reply";
+        return $api;
+    }
+    public function getApiPush(){
+        $api = "https://api.line.me/v2/bot/message/push";
+        return $api;
     }
 
-    public function setAccessToken($value)
-    {
-        $this->accessToken = $value;
+    private function httpPost($api,$body){
+        $client = new Client();
+        $header = array( 
+            'Content-Type: application/json; charser=UTF-8', 
+            'Authorization: Bearer '.$this->channelAccessToken);
+        $result = $client->post($api, ['query' => $body, 'headers' => $header]);
+
+
+        // $ch = curl_init($api); 
+        // curl_setopt($ch, CURLOPT_POST, true); 
+        // curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST'); 
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); 
+        // curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body)); 
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, array( 
+        //     'Content-Type: application/json; charser=UTF-8', 
+        //     'Authorization: Bearer '.$this->channelAccessToken)); 
+        // $result = curl_exec($ch); 
+        // curl_close($ch); 
+        return $result;
     }
-
-    public function verifyTokken($hub_verify_token, $challange)
-    {
-        try
-        {
-            if ($hub_verify_token === $this->hubVerifyToken)
-            {
-                return $challange;
-            }
-            else
-            {
-                throw new Exception("Tokken not verified");
-            }
-        }
-        catch(Exception $ex)
-        {
-            return $ex->getMessage();
-        }
-    }
-
-    public function readMessage($input)
-    {
-        try
-        {
-            $payloads = null;
-            $senderId = $input['entry'][0]['messaging'][0]['sender']['id'];
-            $messageText = $input['entry'][0]['messaging'][0]['message']['text'];
-            // $postback = $input['entry'][0]['messaging'][0]['postback'];
-            // $loctitle = $input['entry'][0]['messaging'][0]['message']['attachments'][0]['title'];
-            // if (!empty($postback))
-            // {
-            //     $payloads = $input['entry'][0]['messaging'][0]['postback']['payload'];
-            //     return ['senderid' => $senderId, 'message' => $payloads];
-            // }
-            // if (!empty($loctitle))
-            // {
-            //     $payloads = $input['entry'][0]['messaging'][0]['postback']['payload'];
-            //     return ['senderid' => $senderId, 'message' => $messageText, 'location' => $loctitle];
-            // }
-            // print_r($messageText);exit;
-            // file_put_contents('abc.txt', $payloads);
-            // var_dump($senderId,$messageText,$payload);
-            //   $payload_txt = $input['entry'][0]['messaging'][0]['message']['quick_reply']‌​['payload'];
-            return ['senderid' => $senderId, 'message' => $messageText];
-        }
-        catch(Exception $ex)
-        {
-            return $ex->getMessage();
-        }
-    }
-
-    public function sendMessage($input)
-    {
-        try
-        {
-            $client = new Client();
-            $url = "https://graph.facebook.com/v2.6/me/messages";
-            $messageText = strtolower($input['message']);
-            $senderId = $input['senderid'];
-            $msgarray = explode(' ', $messageText);
-
-            $response = null;
-            $header = array(
-                'content-type' => 'application/json'
+    
+    public function reply($text){
+        $api = $this->apiReply;
+        $webhook = $this->webhookEventObject;
+        $replyToken = $webhook->{"events"}[0]->{"replyToken"}; 
+        $body["replyToken"] = $replyToken;
+        $body["messages"][0] = array(
+            "type" => "text",
+            "text"=>$text
             );
-            if (in_array('hi', $msgarray))
-            {
-                $answer = "Hello! how may I help you today?";
-                $response = ['recipient' => ['id' => $senderId], 'message' => ['text' => $answer], 'access_token' => $this->accessToken];
-            }
-            elseif (in_array('blog', $msgarray))
-            {
-                $answer = ["attachment" => ["type" => "template", "payload" => ["template_type" => "generic", "elements" => [["title" => "Migrate your symfony application", "item_url" => "https://www.cloudways.com/blog/migrate-symfony-from-cpanel-to-cloud-hosting/", "image_url" => "https://www.cloudways.com/blog/wp-content/uploads/Migrating-Your-Symfony-Website-To-Cloudways-Banner.jpg", "subtitle" => "Migrate your symfony application from Cpanel to Cloud.", "buttons" => [["type" => "web_url", "url" => "www.cloudways.com", "title" => "View Website"], ["type" => "postback", "title" => "Start Chatting", "payload" => "get started"]]]]]]];
-                $response = ['recipient' => ['id' => $senderId], 'message' => $answer, 'access_token' => $this->accessToken];
+        
+        $result = $this->httpPost($api,$body);
+        return $result;
+    }
+    
+    public function push($body){
+        $api = $this->apiPush;
+        $result = $this->httpPost($api, $body);
+        return $result;
+    }
 
-                // file_put_contents('abc.txt', print_r($response));
-            }
-            elseif (in_array('list', $msgarray))
-            {
-                $answer = ["attachment" => ["type" => "template", "payload" => ["template_type" => "list", "elements" => [["title" => "Welcome to Peter\'s Hats", "item_url" => "https://www.cloudways.com/blog/migrate-symfony-from-cpanel-to-cloud-hosting/", "image_url" => "https://www.cloudways.com/blog/wp-content/uploads/Migrating-Your-Symfony-Website-To-Cloudways-Banner.jpg", "subtitle" => "We\'ve got the right hat for everyone.", "buttons" => [["type" => "web_url", "url" => "https://cloudways.com", "title" => "View Website"], ]], ["title" => "Multipurpose Theme Design and Versatility", "item_url" => "https://www.cloudways.com/blog/multipurpose-wordpress-theme-for-agency/", "image_url" => "https://www.cloudways.com/blog/wp-content/uploads/How-a-multipurpose-WordPress-theme-can-help-your-agency-Banner.jpg", "subtitle" => "We've got the right theme for everyone.", "buttons" => [["type" => "web_url", "url" => "https://cloudways.com", "title" => "View Website"], ]], ["title" => "Add Custom Discount in Magento 2", "item_url" => "https://www.cloudways.com/blog/add-custom-discount-magento-2/", "image_url" => "https://www.cloudways.com/blog/wp-content/uploads/M2-Custom-Discount-Banner.jpg", "subtitle" => "Learn adding magento 2 custom discounts.", "buttons" => [["type" => "web_url", "url" => "https://cloudways.com", "title" => "View Website"], ]]]]]];
-                $response = ['recipient' => ['id' => $senderId], 'message' => $answer, 'access_token' => $this->accessToken];
-            }
-            elseif ($messageText == 'get started')
-            {
-                $answer = ["text" => "Please share your location:", "quick_replies" => [["content_type" => "location", ]]];
-                $response = ['recipient' => ['id' => $senderId], 'message' => $answer, 'access_token' => $this->accessToken];
-            }
-            elseif (!empty($input['location']))
-            {
-                $answer = ["text" => 'great you are at' . $input['location'], ];
-                $response = ['recipient' => ['id' => $senderId], 'message' => $answer, 'access_token' => $this->accessToken];
-            }
-            elseif (!empty($messageText))
-            {
-                $answer = 'I can not Understand you ask me about blogs';
-                $response = ['recipient' => ['id' => $senderId], 'message' => ['text' => $answer], 'access_token' => $this->accessToken];
-            }
-            $response = $client->post($url, ['query' => $response, 'headers' => $header]);
+    public function pushText($to, $text){
+        $body = array(
+            'to' => $to,
+            'messages' => [
+            array(
+                'type' => 'text',
+                'text' => $text
+                )
+            ]
+            );
+        $this->push($body);
+    }
 
-            // file_put_contents("payytorrrr.json", json_encode($response));
-            return true;
-        }
-        catch(RequestException $e)
-        {
-            $response = json_decode($e->getResponse()->getBody(true)->getContents());
-            file_put_contents("payytorrrre.json", json_encode($response));
-            return $response;
-        }
+    public function pushImage($to, $imageUrl, $previewImageUrl = false){
+        $body = array(
+            'to' => $to,
+            'messages' => [
+            array(
+                'type' => 'image',
+                'originalContentUrl' => $imageUrl,
+                'previewImageUrl' => $previewImageUrl ? $previewImageUrl : $imageUrl
+                )
+            ]
+            );
+        $this->push($body);
+    }
+
+    public function pushVideo($to, $videoUrl, $previewImageUrl){
+        $body = array(
+          'to' => $to,
+          'messages' => [
+          array(
+            'type' => 'video',
+            'originalContentUrl' => $videoUrl,
+            'previewImageUrl' => $previewImageUrl
+            )
+          ]
+          );
+        $this->push($body);
+    }
+
+    public function pushAudio($to, $audioUrl, $duration){
+        $body = array(
+            'to' => $to,
+            'messages' => [
+            array(
+                'type' => 'audio',
+                'originalContentUrl' => $audioUrl,
+                'duration' => $duration
+                )
+            ]
+            );
+        $this->push($body);
+    }
+
+    public function pushLocation($to, $title, $address, $latitude, $longitude){
+        $body = array(
+            'to' => $to,
+            'messages' => [
+            array(
+                'type' => 'location',
+                'title' => $title,
+                'address' => $address,
+                'latitude' => $latitude,
+                'longitude' => $longitude
+                )
+            ]
+            );
+        $this->push($body);
+    }
+    
+    public function getMessageText(){
+        $webhook = $this->webhookEventObject;
+        $messageText = $webhook->{"events"}[0]->{"message"}->{"text"}; 
+        return $messageText;
+    }
+    
+    public function postbackEvent(){
+        $webhook = $this->webhookEventObject;
+        $postback = $webhook->{"events"}[0]->{"postback"}->{"data"}; 
+        return $postback;
+    }
+    
+    public function getUserId(){
+        $webhook = $this->webhookEventObject;
+        $userId = $webhook->{"events"}[0]->{"source"}->{"userId"}; 
+        return $userId;
     }
 }

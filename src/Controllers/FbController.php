@@ -13,16 +13,18 @@ class FbController extends Controller
     private $hubVerifyToken = null;
     private $accessToken = null;
     private $tokken = false;
+    private $vtokken = false;
     protected $client = null;
 
     public function __construct()
     {
-        
+        $this->hubVerifyToken='EAAEW4Q3oGwQBALwd9UNYxq8viFFPTFSsVyaiZAVOrFKq14EWgwbkbEcFnq5bueVaVaKklazM0fMPHf9k5sc5cboZBNdZAPO7msH5n7fvcAWJ9iMSfsHWZB0X9IakfeNelZCY9QcJGWJFrfXfOmmdaB6un7jDnrZAtoIjLCnu6aPQZDZD';
+        $this->vtokken = 'sandytoken';
     }
 
     public function sanAuthorization(Request $request){
-        $token = env('FACEBOOK_TOKEN');
-        $vtoken = env('FACEBOOK_VERIFICATION');
+        $token = $this->hubVerifyToken;
+        $vtoken = $this->vtokken;
         $fbtoken = isset($_REQUEST['hub_verify_token']) ? $_REQUEST['hub_verify_token'] : '';
         $challange = isset($_REQUEST['hub_challenge']) ? $_REQUEST['hub_challenge'] : '';
         $this->setHubVerifyToken($vtoken);
