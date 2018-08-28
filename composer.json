@@ -1,0 +1,41 @@
+{
+    "name": "sandeep/bangarhsocial",
+    "description": ":description",
+    "license": "license",
+    "authors": [
+        {
+            "name": "Sandeep Bangarh",
+            "email": "sanbangarh309@gmail.com",
+            "homepage": "www.aryanaturalfarming.com"
+        }
+    ],
+    "homepage": "https://github.com/sandeep/bangarhsocial",
+    "keywords": ["Laravel", "BangarhSocial"],
+    "require": {
+        "illuminate/support": "~5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~6.0",
+        "orchestra/testbench": "~3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "sandeep\\BangarhSocial\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "sandeep\\BangarhSocial\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "sandeep\\BangarhSocial\\BangarhSocialServiceProvider"
+            ],
+            "aliases": {
+                "BangarhSocial": "sandeep\\BangarhSocial\\Facades\\BangarhSocial"
+            }
+        }
+    }
+}
