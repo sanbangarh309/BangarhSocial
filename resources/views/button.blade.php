@@ -298,6 +298,8 @@
 <script type="text/javascript">
    $(function(){
       $('#line_response').click('.at-svc-email',function(){
+         $('#line_popup').hide();
+         $('#whatsapp_popup').hide();
          $('.callback-countdown-block-timer').hide();
          $('.callback-countdown-block-sorry').hide();
          $('.callback-countdown-block .callback-countdown-block-phone').show();
@@ -308,10 +310,33 @@
          $('.callback-countdown-block').hide();
       });
       $('#san_whtsapp').click(function(){
+         $('.callback-countdown-block').hide();
+         $('#line_popup').hide();
          $('#whatsapp_popup').show();
       });
       $('#san_close').click(function(){
          $('#whatsapp_popup').hide();
+      });
+
+      $('#san_line').click(function(){
+         $('.callback-countdown-block').hide();
+         $('#whatsapp_popup').hide();
+         $('#line_popup').show();
+      });
+      $('#san_close_line').click(function(){
+         $('#line_popup').hide();
+      });
+      $('.at-svc-skype').click(function(){
+         $('.callback-countdown-block').hide();
+         $('#whatsapp_popup').hide();
+         $('#line_popup').hide();
+         $('.sannn_email').hide();
+      });
+      $('.sannn_email').click(function(){
+         $('.callback-countdown-block').hide();
+         $('#whatsapp_popup').hide();
+         $('.at-svc-skype').hide();
+         $('#line_popup').hide();
       });
       $('#arcontactus-message-callback-phone-submit').click(function(){
          if ($('#san_number').val()) {
