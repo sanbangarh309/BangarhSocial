@@ -16,7 +16,7 @@ class ButtonController extends Controller
 
     public function index()
     {
-    	return View('sandeep::button', [
+    	return View('sandeep::pages.index', [
                     'data' => '',
                     'page' => 'home'
                     ]);
