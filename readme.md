@@ -53,5 +53,5 @@ license. Please see the [license file](license.md) for more information.
 [link-downloads]: https://packagist.org/packages/sandeep/bangarhsocial
 [link-travis]: https://travis-ci.org/sandeep/bangarhsocial
 [link-styleci]: https://styleci.io/repos/12345678
-[link-author]: https://github.com/sandeep
+[link-author]: https://github.com/sanbangarh309
 [link-contributors]: ../../contributors]
