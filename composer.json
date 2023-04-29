@@ -1,12 +1,12 @@
 {
     "name": "sandeepbangarh/sbchat",
     "description": ":description",
-    "license": "license",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Sandeep Bangarh",
             "email": "sanbangarh309@gmail.com",
-            "homepage": "www.cardinvitation.in"
+            "homepage": "https://cardinvitation.in"
         }
     ],
     "homepage": "https://github.com/sandeep/bangarhsocial",
